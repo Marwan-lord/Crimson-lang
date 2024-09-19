@@ -6,12 +6,12 @@ pub enum Expression {
     Identifier(String),
     IntegerLiteral(i64),
     String(String),
-    Boolean(bool),
+    Bool(bool),
     Prefix(Prefix, Box<Expression>),
     Infix(Infix, Box<Expression>, Box<Expression>),
     If(Box<Expression>, Box<BlockStatement>, Option<Box<BlockStatement>>),
     FunctionLiteral(Vec<String>, Box<BlockStatement>),
-    DictionaryLiteral(Vec<(Expression, Expression)>),
+    HashMapLiteral(Vec<(Expression, Expression)>),
     ArrayLiteral(Vec<Expression>),
     Index(Box<Expression>, Box<Expression>),
     Call(Box<Expression>, Vec<Expression>),
@@ -32,7 +32,7 @@ pub struct BlockStatement {
 
 
 pub struct Program {
-    stmts: Vec<Statement>,
+    pub stmts: Vec<Statement>,
 }
 
 
@@ -85,7 +85,6 @@ impl fmt::Display for Prefix {
     }
 }
 
-
 impl fmt::Display for Infix {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         match self {
@@ -119,14 +118,14 @@ impl fmt::Display for Expression {
             Expression::Identifier(s) => write!(f, "{}", s),
             Expression::IntegerLiteral(i) => write!(f, "{}", i),
             Expression::String(s) => write!(f, "\"{}\"", s),
-            Expression::Boolean(b) => write!(f, "{}", b),
+            Expression::Bool(b) => write!(f, "{}", b),
             Expression::Prefix(p, exp) => write!(f, "({}, {})", p, exp),
             Expression::Infix(op, left, right) => write!(f, "({} {} {})", op, left, right),
             Expression::If(exp, true_blk, Some(false_blk)) =>
                 write!(f,"if ({}) {} else {}", exp, true_blk, false_blk),
             Expression::If(exp, true_blk, None) =>
                 write!(f,"if ({}) {}", exp, true_blk),
-            Expression::DictionaryLiteral(key_values) => {
+            Expression::HashMapLiteral(key_values) => {
                 let mut str = String::new();
                 str.push_str("{");
                 for (k, v) in key_values{

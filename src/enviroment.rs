@@ -4,12 +4,12 @@ use std::rc::Rc;
 use std::cell::RefCell;
 
 #[derive(Debug, Default, PartialEq)]
-pub struct Enviroment {
+pub struct EnviromentVariables {
     store: HashMap<String, Object>,
-    outer: Option<Rc<RefCell<Enviroment>>>,
+    outer: Option<Rc<RefCell<EnviromentVariables>>>,
 }
 
-impl Enviroment {
+impl EnviromentVariables {
     pub fn new() -> Self {
         Default::default()
     }
@@ -17,7 +17,7 @@ impl Enviroment {
     pub fn extend(outer: Rc<RefCell<Self>>) -> Self {
         Self { 
             store: HashMap::new(),
-            outer: Some(outer),
+           outer: Some(outer),
         }
     }
 

@@ -1,30 +1,31 @@
 use crate::object::Object;
 
-pub fn get_inbuilt_function(identifier: &str) -> Option<Object> {
+pub fn get_builtin(identifier: &str) -> Option<Object> {
     match identifier {
-        "len" => Some(Object::FunctionInBuilt(String::from("len"))),
+        "len" => Some(Object::BuiltInFunction(String::from("len"))),
         _ => None
     }
 }
 
-fn process_len_function(params: &Vec<Object>) -> Object {
-    if params.len() != 1 {
-        panic!("Expected one argument for len found {} arguments", params.len())
+fn process_len(args: &Vec<Object>) -> Object {
+    if args.len() != 1 {
+        panic!("Expected one argument for len found {} arguments", args.len())
     }
 
-    let argument = &params[0];
+    let argument = &args[0];
 
     match argument {
         Object::String(s) => Object::Integer(s.len() as i64),
+        Object::Array(o) => Object::Integer(o.len() as i64),
         _ => panic!("Expected string argument"),
     }
 }
 
-pub fn eval_inbuilt_function(func_obj: &Object, params: &Vec<Object>) -> Object {
+pub fn eval_builtin(func_obj: &Object, args: &Vec<Object>) -> Object {
     match func_obj {
-        Object::FunctionInBuilt(func_name) => {
+        Object::BuiltInFunction(func_name) => {
             match func_name.as_str() {
-                "len" => return process_len_function(params),
+                "len" => return process_len(args),
                 _ => panic!("Invalid inbuilt function")
             }
         } 
