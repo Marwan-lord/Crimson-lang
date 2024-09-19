@@ -1,6 +1,8 @@
 # Crimson-lang
 An interpreted programming language made in rust 
 inspired mainly by monkey-lang 
+
+# Syntax 
 ```
 let name = "Marwan"
 let sum = fn ( a, b) { a + b; };
