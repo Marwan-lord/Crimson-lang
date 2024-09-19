@@ -6,8 +6,8 @@ inspired mainly by monkey-lang
 ```
 let name = "Marwan"
 let sum = fn ( a, b) { a + b; };
-sum( 12, sum(32, 43)
-
+sum( 12, sum(32, 43))
+let print = fn ( thing ) {  thing; };
 let greet = fn( name ) { "hello" + name; };
 greet(name)
 
