@@ -1,6 +1,7 @@
 # Crimson-lang
-An interpreted programming language made in rust 
-inspired mainly by monkey-lang 
+An interpreted programming language made in rust  
+inspired mainly by monkey-lang from "Writing An Interpreter Book In Go" book 
+
 
 # Syntax 
 ```
