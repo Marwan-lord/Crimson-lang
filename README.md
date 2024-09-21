@@ -32,7 +32,7 @@ if (x > y) { print(" x is larger") } else { print(" y is larger") };
 
 
 # Todos
-- [x] Workning
+- [x] Working
 - [ ] More builtin functions eg. readln(), array functions
 - [ ] loops
 
