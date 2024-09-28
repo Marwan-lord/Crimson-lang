@@ -1,5 +1,5 @@
 # Crimson-lang
-An interpreted programming language made in rust  
+An interpreted expression-based programming language made in rust  
 inspired mainly by monkey-lang from "Writing An Interpreter Book In Go" book 
 
 
@@ -33,7 +33,7 @@ if (x > y) { print(" x is larger") } else { print(" y is larger") };
 
 # Todos
 - [x] Working
-- [ ] More builtin functions eg. readln(), array functions
+- [ ] More builtin functions (eg. readln(), array functions)
 - [ ] loops
 
 
