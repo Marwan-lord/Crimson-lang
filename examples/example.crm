@@ -1,4 +1,4 @@
-let name = "Marwan"
+let name = "Marwan Mohamed"
 let sum = fn ( a, b) { a + b; };
 sum( 12, sum(32, 43))
 let print = fn (thing) { thing; };
