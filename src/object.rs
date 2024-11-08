@@ -17,7 +17,11 @@ pub enum Object {
     BuiltInFunction(String),
     Array(Vec<Object>),
     HashMap(HashMap<Object, Object>),
-    FunctionLiteral(Vec<String>, BlockStatement, Rc<RefCell<EnviromentVariables>>),
+    FunctionLiteral(
+        Vec<String>,
+        BlockStatement,
+        Rc<RefCell<EnviromentVariables>>,
+    ),
 }
 
 impl Eq for Object {}

@@ -1,7 +1,7 @@
 use crate::object::Object;
+use std::cell::RefCell;
 use std::collections::HashMap;
 use std::rc::Rc;
-use std::cell::RefCell;
 
 #[derive(Debug, Default, PartialEq)]
 pub struct EnviromentVariables {
@@ -15,20 +15,19 @@ impl EnviromentVariables {
     }
 
     pub fn extend(outer: Rc<RefCell<Self>>) -> Self {
-        Self { 
+        Self {
             store: HashMap::new(),
-           outer: Some(outer),
+            outer: Some(outer),
         }
     }
 
     pub fn get(&self, name: &str) -> Option<Object> {
         match self.store.get(name) {
             Some(value) => Some(value.clone()),
-            None => self.
-                outer
+            None => self
+                .outer
                 .as_ref()
                 .and_then(|o| o.borrow().get(name).clone()),
-
         }
     }
 

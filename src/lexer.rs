@@ -37,7 +37,7 @@ pub enum Token {
 }
 
 fn from_string(token: &Token) -> Box<String> {
-        let str_repr = match token {
+    let str_repr = match token {
         Token::Ill => String::from("Illegal"),
         Token::Eof => String::from("Eof"),
         Token::Identifiere(s) => s.clone(),
@@ -59,7 +59,7 @@ fn from_string(token: &Token) -> Box<String> {
         Token::LParen => String::from("("),
         Token::RParen => String::from(")"),
         Token::Func => String::from("fn"),
-        Token::Let=> String::from("let"),
+        Token::Let => String::from("let"),
         Token::True => String::from("true"),
         Token::False => String::from("false"),
         Token::If => String::from("if"),
@@ -92,7 +92,7 @@ impl Lexer {
                 break;
             }
 
-            // this is important for the keyword and identifier matching 
+            // this is important for the keyword and identifier matching
             let start = index;
             let token = match input.chars().nth(index).unwrap() {
                 ';' => Token::Semicolon,
@@ -117,7 +117,7 @@ impl Lexer {
                                 index += 1;
                                 Token::NotEq
                             }
-                            _ => Token::Bang
+                            _ => Token::Bang,
                         }
                     } else {
                         Token::Bang
@@ -130,7 +130,7 @@ impl Lexer {
                                 index += 1;
                                 Token::Eq
                             }
-                            _ => Token::Assign
+                            _ => Token::Assign,
                         }
                     } else {
                         Token::Assign
@@ -157,10 +157,12 @@ impl Lexer {
                 let str_token = Token::String(input[(start + 1)..end].to_string());
                 tokens.push(str_token);
             }
-            
+
             if index < len && input.as_bytes()[index].is_ascii_alphabetic() {
-                while index < len && (input.chars().nth(index).unwrap().is_alphanumeric() ||
-                    input.chars().nth(index).unwrap() == '_') {
+                while index < len
+                    && (input.chars().nth(index).unwrap().is_alphanumeric()
+                        || input.chars().nth(index).unwrap() == '_')
+                {
                     index += 1;
                 }
 
@@ -173,26 +175,27 @@ impl Lexer {
                         "else" => Token::Else,
                         "return" => Token::Ret,
                         "fn" => Token::Func,
-                        _ => Token::Identifiere(input[start..index].to_string())
+                        _ => Token::Identifiere(input[start..index].to_string()),
                     };
                     tokens.push(s);
                 }
             }
 
             if index < len && input.as_bytes()[index].is_ascii_digit() {
-
                 while index < len && (input.as_bytes()[index].is_ascii_digit()) {
                     index += 1;
                 }
 
                 if start < index {
-                    tokens.push(Token::Integer(input[start..index].to_string().parse::<i64>().unwrap()));
+                    tokens.push(Token::Integer(
+                        input[start..index].to_string().parse::<i64>().unwrap(),
+                    ));
                 }
             }
         }
         tokens.reverse();
 
-        Box::new( Lexer { tokens } )
+        Box::new(Lexer { tokens })
     }
 
     pub fn next(&mut self) -> Token {

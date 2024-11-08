@@ -1,5 +1,5 @@
-use std::fmt::Formatter;
 use std::fmt;
+use std::fmt::Formatter;
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum Expression {
@@ -9,14 +9,17 @@ pub enum Expression {
     Bool(bool),
     Prefix(Prefix, Box<Expression>),
     Infix(Infix, Box<Expression>, Box<Expression>),
-    If(Box<Expression>, Box<BlockStatement>, Option<Box<BlockStatement>>),
+    If(
+        Box<Expression>,
+        Box<BlockStatement>,
+        Option<Box<BlockStatement>>,
+    ),
     FunctionLiteral(Vec<String>, Box<BlockStatement>),
     HashMapLiteral(Vec<(Expression, Expression)>),
     ArrayLiteral(Vec<Expression>),
     Index(Box<Expression>, Box<Expression>),
     Call(Box<Expression>, Vec<Expression>),
 }
-
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum Statement {
@@ -30,16 +33,14 @@ pub struct BlockStatement {
     pub stmts: Vec<Statement>,
 }
 
-
 pub struct Program {
     pub stmts: Vec<Statement>,
 }
 
-
 #[derive(Debug, PartialEq, Clone)]
 pub enum Prefix {
     Minus,
-    Bang
+    Bang,
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -57,19 +58,18 @@ pub enum Infix {
 
 impl fmt::Display for Program {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        for stmt in &self.stmts{
+        for stmt in &self.stmts {
             write!(f, "{}", stmt)?;
         }
         Ok(())
     }
 }
 
-
 impl fmt::Display for BlockStatement {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         write!(f, "{{")?;
         for stmt in &self.stmts {
-            write!(f, "{}", stmt)?; 
+            write!(f, "{}", stmt)?;
         }
         write!(f, "}}")?;
         Ok(())
@@ -121,14 +121,14 @@ impl fmt::Display for Expression {
             Expression::Bool(b) => write!(f, "{}", b),
             Expression::Prefix(p, exp) => write!(f, "({}, {})", p, exp),
             Expression::Infix(op, left, right) => write!(f, "({} {} {})", op, left, right),
-            Expression::If(exp, true_blk, Some(false_blk)) =>
-                write!(f,"if ({}) {} else {}", exp, true_blk, false_blk),
-            Expression::If(exp, true_blk, None) =>
-                write!(f,"if ({}) {}", exp, true_blk),
+            Expression::If(exp, true_blk, Some(false_blk)) => {
+                write!(f, "if ({}) {} else {}", exp, true_blk, false_blk)
+            }
+            Expression::If(exp, true_blk, None) => write!(f, "if ({}) {}", exp, true_blk),
             Expression::HashMapLiteral(key_values) => {
                 let mut str = String::new();
                 str.push_str("{");
-                for (k, v) in key_values{
+                for (k, v) in key_values {
                     str.push_str(format!("{}:{},", k, v).as_str());
                 }
 
@@ -137,13 +137,30 @@ impl fmt::Display for Expression {
                 }
                 str.push_str("}");
                 write!(f, "{}", str)
-            },
-            Expression::ArrayLiteral(members) => write!(f, "[{}]",
-                                                        members.iter().map(|a| a.to_string()).collect::<Vec<String>>().join(",")),
+            }
+            Expression::ArrayLiteral(members) => write!(
+                f,
+                "[{}]",
+                members
+                    .iter()
+                    .map(|a| a.to_string())
+                    .collect::<Vec<String>>()
+                    .join(",")
+            ),
             Expression::Index(arr, idx) => write!(f, "{}[{}]", arr.to_string(), idx.to_string()),
-            Expression::FunctionLiteral(params, block) => write!(f, "fn({}){}", params.join(","), block),
-            Expression::Call(exp, params) => write!(f, "{}({})", exp,
-                                                    params.iter().map(|a| a.to_string()).collect::<Vec<String>>().join(",")),
+            Expression::FunctionLiteral(params, block) => {
+                write!(f, "fn({}){}", params.join(","), block)
+            }
+            Expression::Call(exp, params) => write!(
+                f,
+                "{}({})",
+                exp,
+                params
+                    .iter()
+                    .map(|a| a.to_string())
+                    .collect::<Vec<String>>()
+                    .join(",")
+            ),
         }
     }
 }

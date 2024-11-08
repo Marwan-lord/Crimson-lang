@@ -1,20 +1,19 @@
-mod lexer;
 mod ast;
-mod parser;
-pub mod object;
 mod enviroment;
 mod evaluator;
 mod inbuilt;
+mod lexer;
+pub mod object;
+mod parser;
 
-use linefeed::{Interface, ReadResult};
-use crate::lexer::Lexer;
-use crate::evaluator::eval_program;
-use std::rc::Rc;
-use std::cell::RefCell;
 use crate::enviroment::EnviromentVariables;
+use crate::evaluator::eval_program;
+use crate::lexer::Lexer;
+use linefeed::{Interface, ReadResult};
+use std::cell::RefCell;
+use std::rc::Rc;
 
 fn main() {
-
     let reader = Interface::new("Crimson lang").unwrap();
     let mut env = Rc::new(RefCell::new(EnviromentVariables::new()));
 
@@ -31,5 +30,5 @@ fn main() {
         let program = parser.parse_program().unwrap();
         println!("{}", eval_program(program.as_ref(), &mut env));
     }
-    println!("Exit.");
+    println!("Bye from Crimson lang");
 }

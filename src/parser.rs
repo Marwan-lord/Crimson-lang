@@ -1,8 +1,7 @@
-use crate::lexer::{Lexer, Token};
 use crate::ast::*;
+use crate::lexer::{Lexer, Token};
 use std::fmt;
 use std::fmt::Debug;
-
 
 #[derive(Debug, PartialEq, Eq, Clone, PartialOrd)]
 pub enum Precedence {
@@ -37,7 +36,11 @@ impl Parser {
     pub fn new(mut lexer: Box<Lexer>) -> Box<Parser> {
         let curr_token = lexer.next();
         let next_token = lexer.next();
-        Box::new(Parser { lexer, curr_token, next_token })
+        Box::new(Parser {
+            lexer,
+            curr_token,
+            next_token,
+        })
     }
 
     pub fn next(&mut self) -> Token {
@@ -74,7 +77,10 @@ impl Parser {
         if self.curr_token == token {
             self.next();
         } else {
-            panic!("Did not find expected current token {}, found {}", token, self.curr_token);
+            panic!(
+                "Did not find expected current token {}, found {}",
+                token, self.curr_token
+            );
         }
     }
 
@@ -82,7 +88,11 @@ impl Parser {
         if self.peek() == token {
             self.next();
         } else {
-            panic!("Didn't find expected token {}, found {}", token, self.peek());
+            panic!(
+                "Didn't find expected token {}, found {}",
+                token,
+                self.peek()
+            );
         }
     }
 
@@ -90,7 +100,7 @@ impl Parser {
         let token = self.next();
         let identifier = match token {
             Token::Identifiere(s) => Expression::Identifier(s),
-            _ => panic!("Identifier token not found in let statement {}", token)
+            _ => panic!("Identifier token not found in let statement {}", token),
         };
 
         self.expect_next_token(Token::Assign);
@@ -110,7 +120,7 @@ impl Parser {
         self.next();
 
         if self.curr_token == Token::Semicolon {
-            return Box::new(Statement::Return(None))
+            return Box::new(Statement::Return(None));
         }
 
         let expr = self.parse_expression(Precedence::Lowest);
@@ -127,7 +137,7 @@ impl Parser {
 
         match curr_token {
             Token::Identifiere(s) => Box::new(Expression::Identifier(s.to_string())),
-            _ => panic!("Unable to parse identifier {}", self.curr_token)
+            _ => panic!("Unable to parse identifier {}", self.curr_token),
         }
     }
 
@@ -136,7 +146,7 @@ impl Parser {
 
         match curr_token {
             Token::String(s) => Box::new(Expression::String(s.to_string())),
-            _ => panic!("Unable to parse string {}", self.curr_token)
+            _ => panic!("Unable to parse string {}", self.curr_token),
         }
     }
 
@@ -145,7 +155,7 @@ impl Parser {
 
         match curr_token {
             Token::Integer(s) => Box::new(Expression::IntegerLiteral(*s)),
-            _ => panic!("Unable to parse integer {}", self.curr_token)
+            _ => panic!("Unable to parse integer {}", self.curr_token),
         }
     }
 
@@ -155,7 +165,7 @@ impl Parser {
         match curr_token {
             Token::True => Box::new(Expression::Bool(true)),
             Token::False => Box::new(Expression::Bool(false)),
-            _ => panic!("Invalid boolean {}", curr_token)
+            _ => panic!("Invalid boolean {}", curr_token),
         }
     }
 
@@ -165,11 +175,14 @@ impl Parser {
         let prefix = match op {
             Token::Bang => Prefix::Bang,
             Token::Minus => Prefix::Minus,
-            _ => panic!("Invalid token {} prefix expression", op)
+            _ => panic!("Invalid token {} prefix expression", op),
         };
 
         self.next();
-        Box::new(Expression::Prefix(prefix, self.parse_expression(Precedence::Prefix)))
+        Box::new(Expression::Prefix(
+            prefix,
+            self.parse_expression(Precedence::Prefix),
+        ))
     }
 
     fn parse_group_expression(&mut self) -> Box<Expression> {
@@ -191,7 +204,7 @@ impl Parser {
             self.next();
         }
 
-       Box::new(Expression::If(condition, true_block, false_block))
+        Box::new(Expression::If(condition, true_block, false_block))
     }
 
     fn parse_block_statement(&mut self) -> Box<BlockStatement> {
@@ -206,7 +219,7 @@ impl Parser {
             self.next();
         }
 
-        Box::new(BlockStatement{stmts: statements})
+        Box::new(BlockStatement { stmts: statements })
     }
 
     pub fn parse_expression_statement(&mut self) -> Box<Statement> {
@@ -236,16 +249,28 @@ impl Parser {
             Token::Func => self.parse_function(),
             Token::LBracket => self.parse_array_literal(),
             Token::LBrace => self.parse_hash_literal(),
-            _ => panic!("Invalid token in expression {}, next token {}", t, self.next_token.clone())
+            _ => panic!(
+                "Invalid token in expression {}, next token {}",
+                t,
+                self.next_token.clone()
+            ),
         };
 
-        while self.peek() != Token::Semicolon && self.peek() != Token::Colon &&
-            self.peek_precedence() > precedence {
+        while self.peek() != Token::Semicolon
+            && self.peek() != Token::Colon
+            && self.peek_precedence() > precedence
+        {
             let token = self.next();
 
             expr = match token {
-                Token::Plus | Token::Minus | Token::Slash | Token::Asterisk |
-                Token::Eq | Token::NotEq | Token::Lt | Token::Gt => {
+                Token::Plus
+                | Token::Minus
+                | Token::Slash
+                | Token::Asterisk
+                | Token::Eq
+                | Token::NotEq
+                | Token::Lt
+                | Token::Gt => {
                     self.next();
                     let infix = match token {
                         Token::Plus => Infix::Plus,
@@ -259,16 +284,15 @@ impl Parser {
                         _ => panic!("Invalid infix token {}", token),
                     };
 
-                    Box::new(Expression::Infix(infix, expr,
-                                         self.parse_expression(self.precedence(&token))))
+                    Box::new(Expression::Infix(
+                        infix,
+                        expr,
+                        self.parse_expression(self.precedence(&token)),
+                    ))
                 }
-                Token::LParen => {
-                    self.parse_function_call(expr)
-                },
-                Token::LBracket => {
-                    self.parse_array_index(expr)
-                }
-                _ => expr
+                Token::LParen => self.parse_function_call(expr),
+                Token::LBracket => self.parse_array_index(expr),
+                _ => expr,
             };
         }
 
@@ -298,7 +322,7 @@ impl Parser {
         Box::new(Expression::Call(left, parameters))
     }
 
-    pub fn  parse_array_index(&mut self, left: Box<Expression>) -> Box<Expression> {
+    pub fn parse_array_index(&mut self, left: Box<Expression>) -> Box<Expression> {
         self.expect_current_token(Token::LBracket);
         let index_expr = self.parse_expression(Precedence::Lowest);
         self.expect_next_token(Token::RBracket);
@@ -306,7 +330,6 @@ impl Parser {
     }
 
     pub fn parse_array_literal(&mut self) -> Box<Expression> {
-
         let mut members: Vec<Expression> = vec![];
 
         self.expect_current_token(Token::LBracket);
@@ -325,8 +348,7 @@ impl Parser {
     }
 
     pub fn parse_hash_literal(&mut self) -> Box<Expression> {
-
-        let mut key_values= vec![];
+        let mut key_values = vec![];
 
         self.expect_current_token(Token::LBrace);
         while self.curr_token != Token::RBrace {
@@ -358,7 +380,7 @@ impl Parser {
 
             let identifier = match idf {
                 Token::Identifiere(i) => i.to_string(),
-                _ => panic!("Unexpected function parameter {}", idf)
+                _ => panic!("Unexpected function parameter {}", idf),
             };
             parameters.push(identifier);
 
@@ -405,10 +427,10 @@ impl Parser {
 
 #[cfg(test)]
 mod tests {
+    use crate::ast::Expression;
+    use crate::ast::{Prefix, Statement};
     use crate::lexer::{Lexer, Token};
     use crate::parser::Parser;
-    use crate::ast::{Statement, Prefix};
-    use crate::ast::Expression;
 
     const TEST_STR: &str = "
     let five = 5;
@@ -468,25 +490,21 @@ mod tests {
         let mut idx = 0;
         for stmt in statements.iter() {
             let _ret_stmt = match stmt {
-                Statement::Return(expr) => {
-                    match idx {
-                        0 => {
-                            assert_eq!(expr.is_none(), true);
-                            assert_eq!(stmt.to_string(), "return;")
-                        },
-                        1 => assert_eq!(stmt.to_string(), "return 5;"),
-                        2 => assert_eq!(stmt.to_string(), "return (+ 10 (* 4 5));"),
-                       _ => panic!("Unexcepted index {}", idx)
+                Statement::Return(expr) => match idx {
+                    0 => {
+                        assert_eq!(expr.is_none(), true);
+                        assert_eq!(stmt.to_string(), "return;")
                     }
+                    1 => assert_eq!(stmt.to_string(), "return 5;"),
+                    2 => assert_eq!(stmt.to_string(), "return (+ 10 (* 4 5));"),
+                    _ => panic!("Unexcepted index {}", idx),
                 },
                 _ => panic!("{}: Expected return statement but found {}", idx, stmt),
             };
 
             idx += 1;
         }
-
     }
-
 
     const TEST_PREFIX_STR: &str = "
         !y;
@@ -500,24 +518,25 @@ mod tests {
 
         let mut idx = 0;
         for stmt in statements.iter() {
-            let _prefix_expr= match stmt {
-                Statement::Expression(expr) => {
-                    match &**expr {
-                       Expression::Prefix(prefix, expr2) => match idx {
-                            0 => {
-                                assert_eq!(*prefix, Prefix::Bang);
-                                assert_eq!(expr2.to_string(), "y");
-                            },
-                            1 => {
-                                assert_eq!(*prefix, Prefix::Minus);
-                                assert_eq!(expr2.to_string(), "1");
-                            },
-                            _ => panic!("Unexpected expression index {}", idx)
-                        },
-                        _ => panic!("Expected prefix expression"),
-                    }
+            let _prefix_expr = match stmt {
+                Statement::Expression(expr) => match &**expr {
+                    Expression::Prefix(prefix, expr2) => match idx {
+                        0 => {
+                            assert_eq!(*prefix, Prefix::Bang);
+                            assert_eq!(expr2.to_string(), "y");
+                        }
+                        1 => {
+                            assert_eq!(*prefix, Prefix::Minus);
+                            assert_eq!(expr2.to_string(), "1");
+                        }
+                        _ => panic!("Unexpected expression index {}", idx),
+                    },
+                    _ => panic!("Expected prefix expression"),
                 },
-                _ => panic!("Expected statement with prefix expression but found {}", stmt),
+                _ => panic!(
+                    "Expected statement with prefix expression but found {}",
+                    stmt
+                ),
             };
             idx += 1;
         }
@@ -536,17 +555,15 @@ mod tests {
         assert_eq!(statements.len(), 1);
         let stmt = &statements[0];
         match stmt {
-            Statement::Expression(expr) => {
-                match &**expr {
-                    Expression::If(cond, true_block, false_block) => {
-                        assert_eq!(cond.to_string(), "(> x y)");
-                        assert_eq!(true_block.to_string(), "{let z = (+ x y);}");
-                        assert_eq!(false_block.is_none(), true);
-                    }
-                    _ => panic!("Expected if expression")
+            Statement::Expression(expr) => match &**expr {
+                Expression::If(cond, true_block, false_block) => {
+                    assert_eq!(cond.to_string(), "(> x y)");
+                    assert_eq!(true_block.to_string(), "{let z = (+ x y);}");
+                    assert_eq!(false_block.is_none(), true);
                 }
-            }
-            _ => panic!("Unexpected expression found")
+                _ => panic!("Expected if expression"),
+            },
+            _ => panic!("Unexpected expression found"),
         }
     }
 
@@ -567,17 +584,18 @@ mod tests {
 
         let stmt = &statements[0];
         match stmt {
-            Statement::Expression(expr) => {
-                match &**expr {
-                    Expression::If(cond, true_block, false_block) => {
-                        assert_eq!(cond.to_string(), "(> x y)");
-                        assert_eq!(true_block.to_string(), "{(+ (* x 2) 3);let x = y;}");
-                        assert_eq!(false_block.as_ref().unwrap().to_string(), "{(+ 4 (* 5 y));(+ x y);}");
-                    }
-                    _ => panic!("Expected if expression")
+            Statement::Expression(expr) => match &**expr {
+                Expression::If(cond, true_block, false_block) => {
+                    assert_eq!(cond.to_string(), "(> x y)");
+                    assert_eq!(true_block.to_string(), "{(+ (* x 2) 3);let x = y;}");
+                    assert_eq!(
+                        false_block.as_ref().unwrap().to_string(),
+                        "{(+ 4 (* 5 y));(+ x y);}"
+                    );
                 }
-            }
-            _ => panic!("Unexpected expression found")
+                _ => panic!("Expected if expression"),
+            },
+            _ => panic!("Unexpected expression found"),
         }
     }
 
@@ -601,17 +619,15 @@ mod tests {
         assert_eq!(statements.len(), 2);
         let stmt = &statements[0];
         match stmt {
-            Statement::Expression(expr) => {
-                match &**expr {
-                    Expression::FunctionLiteral(params, block) => {
-                        assert_eq!(params.iter().as_ref().join(","), "x,y,z");
-                        assert_eq!(block.stmts[0].to_string(), "let z = (+ x y);");
-                        assert_eq!(block.stmts[1].to_string(), "z;");
-                    }
-                    _ => panic!("Expected function literal")
+            Statement::Expression(expr) => match &**expr {
+                Expression::FunctionLiteral(params, block) => {
+                    assert_eq!(params.iter().as_ref().join(","), "x,y,z");
+                    assert_eq!(block.stmts[0].to_string(), "let z = (+ x y);");
+                    assert_eq!(block.stmts[1].to_string(), "z;");
                 }
-            }
-            _ => panic!("Unexpected expression found")
+                _ => panic!("Expected function literal"),
+            },
+            _ => panic!("Unexpected expression found"),
         }
     }
 
@@ -627,16 +643,14 @@ mod tests {
         assert_eq!(statements.len(), 1);
         let stmt = &statements[0];
         match stmt {
-            Statement::Expression(expr) => {
-                match &**expr {
-                    Expression::FunctionLiteral(params, block) => {
-                        assert_eq!(params.len(), 0);
-                        assert_eq!(block.stmts[0].to_string(), "(* 10 20);");
-                    }
-                    _ => panic!("Expected function literal")
+            Statement::Expression(expr) => match &**expr {
+                Expression::FunctionLiteral(params, block) => {
+                    assert_eq!(params.len(), 0);
+                    assert_eq!(block.stmts[0].to_string(), "(* 10 20);");
                 }
-            }
-            _ => panic!("Unexpected expression found")
+                _ => panic!("Expected function literal"),
+            },
+            _ => panic!("Unexpected expression found"),
         }
     }
 
@@ -655,7 +669,7 @@ mod tests {
             Statement::Expression(expr) => {
                 println!("{}", expr);
             }
-            _ => panic!("Unexpected expression found")
+            _ => panic!("Unexpected expression found"),
         }
     }
 
@@ -673,40 +687,52 @@ mod tests {
 
         for idx in 0..statements.len() {
             match &statements[idx] {
-                Statement::Expression(expr) => {
-                    match &**expr {
-                        Expression::Call(func_expr, params) => {
-                            match idx {
-                                0 => {
-                                    assert_eq!(func_expr.to_string(), "sum");
-                                    assert_eq!(params.len(), 0);
-                                },
-                                1 => {
-                                    assert_eq!(func_expr.to_string(), "sum3");
-                                    assert_eq!(params.iter().map(|p| p.to_string()).collect::<Vec<String>>().join(","), "x,y,z");
-                                },
-                                2 => {
-                                    assert_eq!(func_expr.to_string(), "sum_expr");
-                                    assert_eq!(params.iter().map(|p| p.to_string()).collect::<Vec<String>>().join(","),
-                                               "x,(+ y w),z");
-                                },
-                                3 => {
-                                    assert_eq!(func_expr.to_string(), "fn(x,y){(+ x y);}");
-                                    assert_eq!(params.iter().map(|p| p.to_string()).collect::<Vec<String>>().join(","),
-                                               "2,3");
-                                }
-                                _ => panic!("Unexpected idx {}", idx),
-                            }
-
-
-                        },
-                        _ => panic!("Expected call expression")
-                    }
+                Statement::Expression(expr) => match &**expr {
+                    Expression::Call(func_expr, params) => match idx {
+                        0 => {
+                            assert_eq!(func_expr.to_string(), "sum");
+                            assert_eq!(params.len(), 0);
+                        }
+                        1 => {
+                            assert_eq!(func_expr.to_string(), "sum3");
+                            assert_eq!(
+                                params
+                                    .iter()
+                                    .map(|p| p.to_string())
+                                    .collect::<Vec<String>>()
+                                    .join(","),
+                                "x,y,z"
+                            );
+                        }
+                        2 => {
+                            assert_eq!(func_expr.to_string(), "sum_expr");
+                            assert_eq!(
+                                params
+                                    .iter()
+                                    .map(|p| p.to_string())
+                                    .collect::<Vec<String>>()
+                                    .join(","),
+                                "x,(+ y w),z"
+                            );
+                        }
+                        3 => {
+                            assert_eq!(func_expr.to_string(), "fn(x,y){(+ x y);}");
+                            assert_eq!(
+                                params
+                                    .iter()
+                                    .map(|p| p.to_string())
+                                    .collect::<Vec<String>>()
+                                    .join(","),
+                                "2,3"
+                            );
+                        }
+                        _ => panic!("Unexpected idx {}", idx),
+                    },
+                    _ => panic!("Expected call expression"),
                 },
                 _ => panic!("Expected a expression statement"),
             }
         }
-
     }
 
     const TEST_STRINGS_STR: &str = "
@@ -720,11 +746,9 @@ mod tests {
         assert_eq!(statements.len(), 1);
         for stmt in statements.iter() {
             match stmt {
-                Statement::Expression(expr) => {
-                    match &**expr {
-                        Expression::String(s) => println!("{}", s.to_string()),
-                        _ => panic!("Expected string literal in expression found {}", expr)
-                    }
+                Statement::Expression(expr) => match &**expr {
+                    Expression::String(s) => println!("{}", s.to_string()),
+                    _ => panic!("Expected string literal in expression found {}", expr),
                 },
                 _ => panic!("Expected a string expression"),
             }
