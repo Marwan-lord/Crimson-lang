@@ -2,6 +2,7 @@
 An interpreted expression-based programming language made in rust  
 inspired mainly by monkey-lang from "Writing An Interpreter Book In Go" book 
 
+-----
 
 # Syntax 
 ```
