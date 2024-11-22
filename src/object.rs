@@ -58,7 +58,7 @@ impl Display for Object {
             ),
             Object::HashMap(dict) => {
                 let mut str = String::new();
-                str.push_str("{");
+                str.push('{');
                 for (k, v) in dict {
                     str.push_str(format!("{}:{},", k, v).as_str());
                 }
@@ -66,11 +66,11 @@ impl Display for Object {
                 if str.ends_with(',') {
                     str.pop();
                 }
-                str.push_str("}");
+                str.push('}');
                 write!(f, "{}", str)
             }
             Object::FunctionLiteral(parameters, block, _) => {
-                write!(f, "fn({}){{ {} }}", parameters.join(","), block.to_string())
+                write!(f, "fn({}){{ {} }}", parameters.join(","), block)
             }
             _ => panic!("Invalid object"),
         }

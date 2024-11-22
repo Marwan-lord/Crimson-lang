@@ -17,14 +17,14 @@ fn main() {
     let reader = Interface::new("Crimson lang").unwrap();
     let mut env = Rc::new(RefCell::new(EnviromentVariables::new()));
 
-    println!("Hello.");
+    println!("Crimson Lang 1.0 \n");
     reader.set_prompt("> ").unwrap();
 
     while let ReadResult::Input(input) = reader.read_line().unwrap() {
         if input.eq("exit") {
             break;
         }
-        let lexer = Lexer::new(&*input);
+        let lexer = Lexer::new(&input);
         let mut parser = parser::Parser::new(lexer);
 
         let program = parser.parse_program().unwrap();

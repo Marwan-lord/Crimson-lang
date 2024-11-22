@@ -10,13 +10,13 @@ pub fn eval_identifier(identifier: &Expression, env: &Rc<RefCell<EnviromentVaria
     match identifier {
         Expression::Identifier(i) => {
             let id = env.borrow_mut().get(i.as_str());
-            if id.is_some() {
-                return id.unwrap();
+            if let Some(id) = id {
+                return id;
             }
 
             let inbuilt_func = get_builtin(i.as_str());
-            if inbuilt_func.is_some() {
-                return inbuilt_func.unwrap();
+            if let Some(inbuilt_func) = inbuilt_func {
+                return inbuilt_func;
             }
         }
         _ => panic!("Expected identifier"),
@@ -31,6 +31,7 @@ pub fn eval_infix_expression(
     right: &Expression,
     env: &mut Rc<RefCell<EnviromentVariables>>,
 ) -> Object {
+
     let left_obj = eval_expression(left, env);
     let right_obj = eval_expression(right, env);
 
@@ -82,7 +83,7 @@ pub fn eval_prefix_expression(
     let expr_val = eval_expression(expression, env);
     match prefix {
         Prefix::Minus => match expr_val {
-            Object::Integer(i) => Object::Integer(-1 * i),
+            Object::Integer(i) => Object::Integer(-i),
             _ => panic!(
                 "Invalid expression {} in prefix expression, expected integer",
                 expr_val
@@ -102,17 +103,18 @@ pub fn eval_block_statement(
     block: &BlockStatement,
     env: &mut Rc<RefCell<EnviromentVariables>>,
 ) -> Object {
+
     let mut val = Object::Null;
     for stmt in &block.stmts {
         val = match stmt {
-            Statement::Let(x, expr) => eval_let_statement(x.to_string(), &*expr, env),
+            Statement::Let(x, expr) => eval_let_statement(x.to_string(), expr, env),
             Statement::Return(Some(x)) => {
-                return eval_return_statement(&*x, env);
+                return eval_return_statement(x, env);
             }
             Statement::Return(None) => {
                 return Object::Null;
             }
-            Statement::Expression(expr) => eval_expression(&*expr, env),
+            Statement::Expression(expr) => eval_expression(expr, env),
         }
     }
     val
@@ -124,6 +126,7 @@ pub fn eval_if_expression(
     false_block: &Option<Box<BlockStatement>>,
     env: &mut Rc<RefCell<EnviromentVariables>>,
 ) -> Object {
+
     let expr_obj = eval_expression(expr, env);
     let expr_val = match expr_obj {
         Object::Bool(v) => v,
@@ -143,22 +146,23 @@ pub fn eval_if_expression(
 }
 
 pub fn eval_user_defined_function_call(
-    func_params: &Vec<String>,
-    param_objs: &Vec<Object>,
+    func_params: &[String],
+    param_objs: &[Object],
     func_block: &BlockStatement,
     env: &mut Rc<RefCell<EnviromentVariables>>,
 ) -> Object {
+
     let mut func_new_env = Rc::new(RefCell::new(EnviromentVariables::extend(env.clone())));
 
     let mut idx = 0;
     while idx < param_objs.len() {
         func_new_env
             .borrow_mut()
-            .set(&*func_params[idx], param_objs[idx].clone());
+            .set(&func_params[idx], param_objs[idx].clone());
         idx += 1;
     }
 
-    eval_block_statement(&func_block, &mut func_new_env)
+    eval_block_statement(func_block, &mut func_new_env)
 }
 
 pub fn eval_dict_literal(
@@ -176,7 +180,7 @@ pub fn eval_dict_literal(
 }
 
 pub fn eval_array_literal(
-    member_expr: &Vec<Expression>,
+    member_expr: &[Expression],
     env: &mut Rc<RefCell<EnviromentVariables>>,
 ) -> Object {
     let mut members = vec![];
@@ -186,7 +190,7 @@ pub fn eval_array_literal(
     Object::Array(members)
 }
 
-pub fn eval_arr_idx(arr: &Vec<Object>, idx: &Object) -> Object {
+pub fn eval_arr_idx(arr: &[Object], idx: &Object) -> Object {
     match idx {
         Object::Integer(index) => {
             if *index as usize > arr.len() - 1 {
@@ -209,7 +213,7 @@ pub fn eval_dict_idx(dict: &HashMap<Object, Object>, idx: &Object) -> Object {
 }
 
 pub fn eval_function_parameters(
-    params: &Vec<Expression>,
+    params: &[Expression],
     env: &mut Rc<RefCell<EnviromentVariables>>,
 ) -> Vec<Object> {
     let mut param_objs = vec![];
@@ -224,8 +228,8 @@ pub fn eval_function_parameters(
 }
 
 pub fn eval_index(
-    container_expr: &Box<Expression>,
-    idx_expr: &Box<Expression>,
+    container_expr: &Expression,
+    idx_expr: &Expression,
     env: &mut Rc<RefCell<EnviromentVariables>>,
 ) -> Object {
     let container = eval_expression(container_expr, env);
@@ -234,13 +238,13 @@ pub fn eval_index(
     match container {
         Object::Array(arr) => eval_arr_idx(&arr, &idx),
         Object::HashMap(dict) => eval_dict_idx(&dict, &idx),
-        _ => panic!("Expected array or dictionary got {}", container.to_string()),
+        _ => panic!("Expected array or dictionary got {}", container),
     }
 }
 
 pub fn eval_function_call(
-    func_expr: &Box<Expression>,
-    parameters: &Vec<Expression>,
+    func_expr: &Expression,
+    parameters: &[Expression],
     env: &mut Rc<RefCell<EnviromentVariables>>,
 ) -> Object {
     let func_obj = eval_expression(func_expr, env);
@@ -258,7 +262,10 @@ pub fn eval_function_call(
     }
 }
 
-pub fn eval_expression(expr: &Expression, env: &mut Rc<RefCell<EnviromentVariables>>) -> Object {
+pub fn eval_expression(
+    expr: &Expression,
+    env: &mut Rc<RefCell<EnviromentVariables>>
+) -> Object {
     match expr {
         Expression::IntegerLiteral(i) => Object::Integer(*i),
         Expression::Identifier(_s) => eval_identifier(expr, env),
@@ -300,17 +307,17 @@ pub fn eval_program(program: &Program, env: &mut Rc<RefCell<EnviromentVariables>
     let mut val = Object::Null;
     for stmt in &program.stmts {
         val = match stmt {
-            Statement::Let(id, expr) => eval_let_statement(id.to_string(), &*expr, env),
+            Statement::Let(id, expr) => eval_let_statement(id.to_string(), expr, env),
             Statement::Return(Some(expr)) => {
-                return eval_return_statement(&*expr, env);
+                return eval_return_statement(expr, env);
             }
             Statement::Return(None) => {
                 return Object::Null;
             }
-            Statement::Expression(expr) => eval_expression(&*expr, env),
+            Statement::Expression(expr) => eval_expression(expr, env),
         };
     }
-    return val;
+    val
 }
 
 #[cfg(test)]

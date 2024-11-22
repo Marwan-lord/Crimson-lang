@@ -127,7 +127,7 @@ impl fmt::Display for Expression {
             Expression::If(exp, true_blk, None) => write!(f, "if ({}) {}", exp, true_blk),
             Expression::HashMapLiteral(key_values) => {
                 let mut str = String::new();
-                str.push_str("{");
+                str.push('{');
                 for (k, v) in key_values {
                     str.push_str(format!("{}:{},", k, v).as_str());
                 }
@@ -135,7 +135,7 @@ impl fmt::Display for Expression {
                 if str.ends_with(',') {
                     str.pop();
                 }
-                str.push_str("}");
+                str.push('}');
                 write!(f, "{}", str)
             }
             Expression::ArrayLiteral(members) => write!(
@@ -147,7 +147,7 @@ impl fmt::Display for Expression {
                     .collect::<Vec<String>>()
                     .join(",")
             ),
-            Expression::Index(arr, idx) => write!(f, "{}[{}]", arr.to_string(), idx.to_string()),
+            Expression::Index(arr, idx) => write!(f, "{}[{}]", arr, idx),
             Expression::FunctionLiteral(params, block) => {
                 write!(f, "fn({}){}", params.join(","), block)
             }

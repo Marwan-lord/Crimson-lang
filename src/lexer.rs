@@ -36,8 +36,8 @@ pub enum Token {
     Func,
 }
 
-fn from_string(token: &Token) -> Box<String> {
-    let str_repr = match token {
+fn from_string(token: &Token) -> String {
+    match token {
         Token::Ill => String::from("Illegal"),
         Token::Eof => String::from("Eof"),
         Token::Identifiere(s) => s.clone(),
@@ -69,8 +69,7 @@ fn from_string(token: &Token) -> Box<String> {
         Token::RBrace => String::from("}"),
         Token::LBracket => String::from("["),
         Token::RBracket => String::from("]"),
-    };
-    Box::new(str_repr)
+    }
 }
 
 pub struct Lexer {

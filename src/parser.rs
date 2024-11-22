@@ -233,7 +233,7 @@ impl Parser {
 
     ///
     ///  This function uses TDOP algorithm  
-    /// See for more [here](https://eli.thegreenplace.net/2010/01/02/top-down-operator-precedence-parsing)
+    ///  See for more [here](https://eli.thegreenplace.net/2010/01/02/top-down-operator-precedence-parsing)
     ///
     fn parse_expression(&mut self, precedence: Precedence) -> Box<Expression> {
         let t = self.curr_token.clone();
@@ -404,12 +404,11 @@ impl Parser {
     }
 
     pub fn parse_statement(&mut self) -> Box<Statement> {
-        let statement = match self.curr_token {
+        match self.curr_token {
             Token::Let => self.parse_let_statement(),
             Token::Ret => self.parse_return_statement(),
             _ => self.parse_expression_statement(),
-        };
-        statement
+        }
     }
 
     pub fn parse_program(&mut self) -> Result<Box<Program>, ParseError> {
