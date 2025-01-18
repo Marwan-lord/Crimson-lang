@@ -1,5 +1,5 @@
 # Crimson-lang
-An interpreted expression-based programming language made in rust  
+An interpreted expression-based functional programming language made in rust  
 inspired mainly by monkey-lang from "Writing An Interpreter Book In Go" book 
 
 -----
@@ -7,10 +7,13 @@ inspired mainly by monkey-lang from "Writing An Interpreter Book In Go" book
 # Syntax 
 ```
 let name = "Marwan"
-let sum = fn ( a, b) { a + b; };
-sum( 12, sum(32, 43))
-let print = fn ( thing ) {  thing; };
-let greet = fn( name ) { "hello" + name; };
+let sum = fn (a, b) {
+   a + b;
+};
+sum(12, sum(32, 43))
+let greet = fn(name) {
+   "hello" + name;
+};
 greet(name)
 
 let fruits = {
@@ -27,15 +30,13 @@ print(array)
 let x = 12;
 let y = 32;
 
-if (x > y) { print(" x is larger") } else { print(" y is larger") };
+if (x > y) {
+   print(" x is larger")
+} else {
+   print(" y is larger")
+};
 
 ```
-
-
-# Todos
-- [x] Working
-- [ ] More builtin functions (eg. readln(), array functions)
-- [ ] loops
 
 
 # Inspirations 
