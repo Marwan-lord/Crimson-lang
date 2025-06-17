@@ -17,7 +17,7 @@ fn main() {
     let reader = Interface::new("Crimson lang").unwrap();
     let mut env = Rc::new(RefCell::new(EnviromentVariables::new()));
 
-    println!("Crimson Lang 1.0 \n");
+    println!("Crimson Lang. \n");
     reader.set_prompt("> ").unwrap();
 
     while let ReadResult::Input(input) = reader.read_line().unwrap() {
