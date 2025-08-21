@@ -30,5 +30,5 @@ fn main() {
         let program = parser.parse_program().unwrap();
         println!("{}", eval_program(program.as_ref(), &mut env));
     }
-    println!("Bye from Crimson lang");
+    println!("Bye !");
 }
