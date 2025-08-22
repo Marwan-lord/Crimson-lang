@@ -4,7 +4,6 @@ use std::str::Chars;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Token {
-    Ill,
     Eof,
     Identifiere(String),
     String(String),
@@ -39,7 +38,7 @@ pub enum Token {
 
 fn from_string(token: &Token) -> String {
     match token {
-        Token::Ill => String::from("Illegal"),
+        // Token::Ill => String::from("Illegal"),
         Token::Eof => String::from("Eof"),
         Token::Identifiere(s) => s.clone(),
         Token::Integer(i) => i.to_string(),
@@ -145,49 +144,46 @@ impl<'a> Tokenizer<'a> {
             _ => None,
         }
     }
-
     fn is_number(&mut self) -> String {
-        let mut result = String::new();
-        while let Some(n) = self.current {
-            if !n.is_numeric() {
-                break;
+        std::iter::from_fn(|| match self.current {
+            Some(c) if c.is_ascii_digit() => {
+                self.advance_char();
+                Some(c)
             }
-            result.push(n);
-            self.advance_char();
-        }
-
-        result
+            _ => None,
+        })
+        .collect()
     }
 
     fn is_keyword(&mut self) -> String {
-        let mut result = String::new();
-        while let Some(c) = self.current {
-            if c.is_alphanumeric() || c == '_' {
-                result.push(c);
+        std::iter::from_fn(|| match self.current {
+            Some(c) if c.is_alphanumeric() || c == '_' => {
+                let ch = c;
                 self.advance_char();
-            } else {
-                break;
+                Some(ch)
             }
-        }
-
-        result
+            _ => None,
+        })
+        .collect()
     }
 
     fn is_string(&mut self) -> String {
-        let mut result = String::new();
         self.advance_char();
 
-        while let Some(c) = self.current {
-            if c == '"' {
+        let string: String = std::iter::from_fn(|| match self.current {
+            Some('"') => {
                 self.advance_char();
-                break;
+                None
             }
+            Some(c) => {
+                self.advance_char();
+                Some(c)
+            }
+            None => None,
+        })
+        .collect();
 
-            result.push(c);
-            self.advance_char();
-        }
-
-        result
+        string
     }
 
     fn advance_char(&mut self) -> Option<char> {
