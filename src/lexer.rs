@@ -1,5 +1,6 @@
 use std::fmt;
 use std::fmt::Debug;
+use std::str::Chars;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Token {
@@ -71,6 +72,139 @@ fn from_string(token: &Token) -> String {
         Token::RBracket => String::from("]"),
     }
 }
+struct Tokenizer<'a> {
+    chars: Chars<'a>,
+    current: Option<char>,
+}
+
+impl<'a> Tokenizer<'a> {
+    pub fn new(input: &'a str) -> Self {
+        let mut chars = input.chars();
+        let current = chars.next();
+        Self { chars, current }
+    }
+
+    fn bail(&mut self, t: Token) -> Option<Token> {
+        self.advance_char();
+        Some(t)
+    }
+
+    fn next_token(&mut self) -> Option<Token> {
+        self.skip_whitespace();
+
+        match self.current? {
+            '(' => self.bail(Token::LParen),
+            ')' => self.bail(Token::RParen),
+            '[' => self.bail(Token::LBracket),
+            ']' => self.bail(Token::RBracket),
+            '{' => self.bail(Token::LBrace),
+            '}' => self.bail(Token::RBrace),
+            '+' => self.bail(Token::Plus),
+            '-' => self.bail(Token::Minus),
+            '/' => self.bail(Token::Slash),
+            '*' => self.bail(Token::Asterisk),
+            '<' => self.bail(Token::Lt),
+            '>' => self.bail(Token::Gt),
+            ',' => self.bail(Token::Comma),
+            ':' => self.bail(Token::Colon),
+            ';' => self.bail(Token::Semicolon),
+            '=' => match self.advance_char()? {
+                '=' => self.bail(Token::Eq),
+                _ => Some(Token::Assign),
+            },
+            '!' => match self.advance_char()? {
+                '=' => self.bail(Token::NotEq),
+                _ => Some(Token::Bang),
+            },
+            '"' => {
+                let string = self.is_string();
+                Some(Token::String(string))
+            }
+
+            a if a.is_alphabetic() => {
+                let result = self.is_keyword();
+                match result.as_str() {
+                    "if" => Some(Token::If),
+                    "else" => Some(Token::Else),
+                    "fn" => Some(Token::Func),
+                    "let" => Some(Token::Let),
+                    "true" => Some(Token::True),
+                    "false" => Some(Token::False),
+                    "return" => Some(Token::Ret),
+                    _ => Some(Token::Identifiere(result)),
+                }
+            }
+
+            n if n.is_numeric() => {
+                let result = self.is_number();
+                Some(Token::Integer(
+                    result.parse::<i64>().expect("Failed to parse int"),
+                ))
+            }
+
+            _ => None,
+        }
+    }
+
+    fn is_number(&mut self) -> String {
+        let mut result = String::new();
+        while let Some(n) = self.current {
+            if !n.is_numeric() {
+                break;
+            }
+            result.push(n);
+            self.advance_char();
+        }
+
+        result
+    }
+
+    fn is_keyword(&mut self) -> String {
+        let mut result = String::new();
+        while let Some(c) = self.current {
+            if c.is_alphanumeric() || c == '_' {
+                result.push(c);
+                self.advance_char();
+            } else {
+                break;
+            }
+        }
+
+        result
+    }
+
+    fn is_string(&mut self) -> String {
+        let mut result = String::new();
+        self.advance_char();
+
+        while let Some(c) = self.current {
+            if c == '"' {
+                self.advance_char();
+                break;
+            }
+
+            result.push(c);
+            self.advance_char();
+        }
+
+        result
+    }
+
+    fn advance_char(&mut self) -> Option<char> {
+        self.current = self.chars.next();
+        self.current
+    }
+
+    fn skip_whitespace(&mut self) {
+        while let Some(c) = self.current {
+            if !c.is_whitespace() {
+                break;
+            }
+
+            self.advance_char();
+        }
+    }
+}
 
 pub struct Lexer {
     tokens: Vec<Token>,
@@ -78,123 +212,15 @@ pub struct Lexer {
 
 impl Lexer {
     pub fn new(input: &str) -> Box<Self> {
-        let mut tokens: Vec<_> = vec![];
-        let len = input.len();
-        let mut index = 0;
+        let mut tokenizer = Tokenizer::new(input);
+        let mut tokens = vec![];
 
-        while index < len {
-            while index < len && input.as_bytes()[index].is_ascii_whitespace() {
-                index += 1;
-            }
-
-            if index >= len {
-                break;
-            }
-
-            // this is important for the keyword and identifier matching
-            let start = index;
-            let token = match input.chars().nth(index).unwrap() {
-                ';' => Token::Semicolon,
-                ':' => Token::Colon,
-                '(' => Token::LParen,
-                ')' => Token::RParen,
-                ',' => Token::Comma,
-                ']' => Token::RBracket,
-                '>' => Token::Gt,
-                '<' => Token::Lt,
-                '*' => Token::Asterisk,
-                '-' => Token::Minus,
-                '+' => Token::Plus,
-                '{' => Token::LBrace,
-                '}' => Token::RBrace,
-                '[' => Token::LBracket,
-                '/' => Token::Slash,
-                '!' => {
-                    if len - index > 1 {
-                        match input.chars().nth(index + 1).unwrap() {
-                            '=' => {
-                                index += 1;
-                                Token::NotEq
-                            }
-                            _ => Token::Bang,
-                        }
-                    } else {
-                        Token::Bang
-                    }
-                }
-                '=' => {
-                    if len - index > 1 {
-                        match input.chars().nth(index + 1).unwrap() {
-                            '=' => {
-                                index += 1;
-                                Token::Eq
-                            }
-                            _ => Token::Assign,
-                        }
-                    } else {
-                        Token::Assign
-                    }
-                }
-                _ => Token::Ill,
-            };
-            if token != Token::Ill {
-                index += 1;
-                tokens.push(token);
-                continue;
-            }
-
-            if input.chars().nth(index).unwrap() == '"' {
-                index += 1;
-                while index < len && input.chars().nth(index).unwrap() != '"' {
-                    index += 1;
-                }
-
-                let end = index;
-                if index < len {
-                    index += 1;
-                }
-                let str_token = Token::String(input[(start + 1)..end].to_string());
-                tokens.push(str_token);
-            }
-
-            if index < len && input.as_bytes()[index].is_ascii_alphabetic() {
-                while index < len
-                    && (input.chars().nth(index).unwrap().is_alphanumeric()
-                        || input.chars().nth(index).unwrap() == '_')
-                {
-                    index += 1;
-                }
-
-                if start < index {
-                    let s = match &input[start..index] {
-                        "let" => Token::Let,
-                        "true" => Token::True,
-                        "false" => Token::False,
-                        "if" => Token::If,
-                        "else" => Token::Else,
-                        "return" => Token::Ret,
-                        "fn" => Token::Func,
-                        _ => Token::Identifiere(input[start..index].to_string()),
-                    };
-                    tokens.push(s);
-                }
-            }
-
-            if index < len && input.as_bytes()[index].is_ascii_digit() {
-                while index < len && (input.as_bytes()[index].is_ascii_digit()) {
-                    index += 1;
-                }
-
-                if start < index {
-                    tokens.push(Token::Integer(
-                        input[start..index].to_string().parse::<i64>().unwrap(),
-                    ));
-                }
-            }
+        while let Some(t) = tokenizer.next_token() {
+            tokens.push(t);
         }
-        tokens.reverse();
 
-        Box::new(Lexer { tokens })
+        tokens.reverse();
+        Box::new(Self { tokens })
     }
 
     pub fn next(&mut self) -> Token {
@@ -365,6 +391,25 @@ mod tests {
         let mut lexer = Lexer::new(TEST_STR);
 
         for test_token in test_token_vec.iter() {
+            let token = lexer.next();
+            assert_eq!(token, *test_token);
+        }
+    }
+
+    #[test]
+    fn simple() {
+        let input = "let name = \"marwan\";";
+        let mut lexer = Lexer::new(input);
+
+        let test_tokens = vec![
+            Token::Let,
+            Token::Identifiere(String::from("name")),
+            Token::Assign,
+            Token::String(String::from("marwan")),
+            Token::Semicolon,
+        ];
+
+        for test_token in test_tokens.iter() {
             let token = lexer.next();
             assert_eq!(token, *test_token);
         }
