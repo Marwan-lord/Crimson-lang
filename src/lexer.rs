@@ -1,5 +1,6 @@
 use std::fmt;
 use std::fmt::Debug;
+use std::iter::from_fn;
 use std::str::Chars;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -38,7 +39,6 @@ pub enum Token {
 
 fn from_string(token: &Token) -> String {
     match token {
-        // Token::Ill => String::from("Illegal"),
         Token::Eof => String::from("Eof"),
         Token::Identifiere(s) => s.clone(),
         Token::Integer(i) => i.to_string(),
@@ -83,42 +83,46 @@ impl<'a> Tokenizer<'a> {
         Self { chars, current }
     }
 
-    fn bail(&mut self, t: Token) -> Option<Token> {
+    fn consume(&mut self, t: Token) -> Option<Token> {
         self.advance_char();
         Some(t)
+    }
+
+    fn match_compound_token(
+        &mut self,
+        expected: char,
+        compound: Token,
+        single: Token,
+    ) -> Option<Token> {
+        match self.advance_char()? {
+            c if c == expected => self.consume(compound),
+            _ => Some(single),
+        }
     }
 
     fn next_token(&mut self) -> Option<Token> {
         self.skip_whitespace();
 
         match self.current? {
-            '(' => self.bail(Token::LParen),
-            ')' => self.bail(Token::RParen),
-            '[' => self.bail(Token::LBracket),
-            ']' => self.bail(Token::RBracket),
-            '{' => self.bail(Token::LBrace),
-            '}' => self.bail(Token::RBrace),
-            '+' => self.bail(Token::Plus),
-            '-' => self.bail(Token::Minus),
-            '/' => self.bail(Token::Slash),
-            '*' => self.bail(Token::Asterisk),
-            '<' => self.bail(Token::Lt),
-            '>' => self.bail(Token::Gt),
-            ',' => self.bail(Token::Comma),
-            ':' => self.bail(Token::Colon),
-            ';' => self.bail(Token::Semicolon),
-            '=' => match self.advance_char()? {
-                '=' => self.bail(Token::Eq),
-                _ => Some(Token::Assign),
-            },
-            '!' => match self.advance_char()? {
-                '=' => self.bail(Token::NotEq),
-                _ => Some(Token::Bang),
-            },
-            '"' => {
-                let string = self.is_string();
-                Some(Token::String(string))
-            }
+            '(' => self.consume(Token::LParen),
+            ')' => self.consume(Token::RParen),
+            '[' => self.consume(Token::LBracket),
+            ']' => self.consume(Token::RBracket),
+            '{' => self.consume(Token::LBrace),
+            '}' => self.consume(Token::RBrace),
+            '+' => self.consume(Token::Plus),
+            '-' => self.consume(Token::Minus),
+            '/' => self.consume(Token::Slash),
+            '*' => self.consume(Token::Asterisk),
+            '<' => self.consume(Token::Lt),
+            '>' => self.consume(Token::Gt),
+            ',' => self.consume(Token::Comma),
+            ':' => self.consume(Token::Colon),
+            ';' => self.consume(Token::Semicolon),
+
+            '=' => self.match_compound_token('=', Token::Eq, Token::Assign),
+            '!' => self.match_compound_token('=', Token::NotEq, Token::Bang),
+            '"' => Some(Token::String(self.is_string())),
 
             a if a.is_alphabetic() => {
                 let result = self.is_keyword();
@@ -144,8 +148,9 @@ impl<'a> Tokenizer<'a> {
             _ => None,
         }
     }
+
     fn is_number(&mut self) -> String {
-        std::iter::from_fn(|| match self.current {
+        from_fn(|| match self.current {
             Some(c) if c.is_ascii_digit() => {
                 self.advance_char();
                 Some(c)
@@ -156,7 +161,7 @@ impl<'a> Tokenizer<'a> {
     }
 
     fn is_keyword(&mut self) -> String {
-        std::iter::from_fn(|| match self.current {
+        from_fn(|| match self.current {
             Some(c) if c.is_alphanumeric() || c == '_' => {
                 let ch = c;
                 self.advance_char();
@@ -170,7 +175,7 @@ impl<'a> Tokenizer<'a> {
     fn is_string(&mut self) -> String {
         self.advance_char();
 
-        let string: String = std::iter::from_fn(|| match self.current {
+        from_fn(|| match self.current {
             Some('"') => {
                 self.advance_char();
                 None
@@ -181,9 +186,7 @@ impl<'a> Tokenizer<'a> {
             }
             None => None,
         })
-        .collect();
-
-        string
+        .collect()
     }
 
     fn advance_char(&mut self) -> Option<char> {
